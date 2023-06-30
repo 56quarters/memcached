@@ -929,10 +929,13 @@ void item_stats_sizes_disable(ADD_STAT add_stats, void *c) {
 void item_stats_sizes_add(item *it) {
     if (stats_sizes_hist == NULL || stats_sizes_cas_min > ITEM_get_cas(it))
         return;
+
+    mutex_lock(&stats_sizes_lock);
     int ntotal = ITEM_ntotal(it);
     int bucket = ntotal / 32;
     if ((ntotal % 32) != 0) bucket++;
     if (bucket < stats_sizes_buckets) stats_sizes_hist[bucket]++;
+    mutex_unlock(&stats_sizes_lock);
 }
 
 /* I think there's no way for this to be accurate without using the CAS value.
@@ -941,10 +944,13 @@ void item_stats_sizes_add(item *it) {
 void item_stats_sizes_remove(item *it) {
     if (stats_sizes_hist == NULL || stats_sizes_cas_min > ITEM_get_cas(it))
         return;
+
+    mutex_lock(&stats_sizes_lock);
     int ntotal = ITEM_ntotal(it);
     int bucket = ntotal / 32;
     if ((ntotal % 32) != 0) bucket++;
     if (bucket < stats_sizes_buckets) stats_sizes_hist[bucket]--;
+    mutex_unlock(&stats_sizes_lock);
 }
 
 /** dumps out a list of objects of each size, with granularity of 32 bytes */
